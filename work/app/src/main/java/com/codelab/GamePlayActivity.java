@@ -95,6 +95,12 @@ public class GamePlayActivity extends FragmentActivity implements BillingProvide
     }
 
     @Override
+    protected void onDestroy() {
+        mBillingManager.endConnection();
+        super.onDestroy();
+    }
+
+    @Override
     public BillingManager getBillingManager() {
         return mBillingManager;
     }

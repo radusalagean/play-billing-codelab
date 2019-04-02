@@ -19,14 +19,13 @@ package com.codelab.skulist.row;
  * A model for SkusAdapter's row which holds all the data to render UI
  */
 public class SkuRowData {
-    private final String sku, title, price, description, billingType;
+    private final String sku, title, price, description;
 
-    public SkuRowData(String sku, String title, String price, String description, String type) {
+    public SkuRowData(String sku, String title, String price, String description) {
         this.sku = sku;
         this.title = title;
         this.price = price;
         this.description = description;
-        this.billingType = type;
     }
 
     public String getSku() {
@@ -45,7 +44,8 @@ public class SkuRowData {
         return description;
     }
 
-    public String getBillingType() {
-        return billingType;
+    @Override
+    public int hashCode() {
+        return sku.hashCode();
     }
 }

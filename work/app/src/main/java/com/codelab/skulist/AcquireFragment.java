@@ -28,10 +28,16 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
-import com.codelab.GamePlayActivity;
+import com.android.billingclient.api.BillingClient;
+import com.android.billingclient.api.SkuDetails;
+import com.android.billingclient.api.SkuDetailsResponseListener;
+import com.codelab.billing.Skus;
 import com.codelab.sample.R;
 import com.codelab.billing.BillingProvider;
+import com.codelab.skulist.row.SkuRowData;
+import com.codelab.skulist.row.SkuRowDataFactory;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -45,6 +51,25 @@ public class AcquireFragment extends DialogFragment {
     private View mLoadingView;
     private TextView mErrorTextView;
     private BillingProvider mBillingProvider;
+
+    private SkuDetailsResponseListener mSkuDetailsResponseListener =
+            new SkuDetailsResponseListener() {
+        @Override
+        public void onSkuDetailsResponse(int responseCode, List<SkuDetails> skuDetailsList) {
+            Log.i(TAG, "onSkuDetailsResponse: " + responseCode);
+            List<SkuRowData> skuRowDataList = new ArrayList<>();
+            if (responseCode == BillingClient.BillingResponse.OK) {
+                skuRowDataList = SkuRowDataFactory.fromSkuDetailsList(skuDetailsList);
+                mBillingProvider.getBillingManager().addSkuDetails(skuDetailsList);
+            }
+            if (skuRowDataList.isEmpty()) {
+                displayAnErrorIfNeeded();
+            } else {
+                mAdapter.updateData(skuRowDataList);
+                setWaitScreen(false);
+            }
+        }
+    };
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -111,7 +136,13 @@ public class AcquireFragment extends DialogFragment {
      * Executes query for SKU details at the background thread
      */
     private void handleManagerAndUiReady() {
-        // TODO: If Billing Manager was successfully initialized - start querying for SKUs
+        // If Billing Manager was successfully initialized - start querying for SKUs
+        List<String> skus = Skus.getSkus(BillingClient.SkuType.INAPP);
+        mBillingProvider.getBillingManager().querySkuGetDetailsAsync(BillingClient.SkuType.INAPP,
+                skus, mSkuDetailsResponseListener);
+        skus = Skus.getSkus(BillingClient.SkuType.SUBS);
+        mBillingProvider.getBillingManager().querySkuGetDetailsAsync(BillingClient.SkuType.SUBS,
+                skus, mSkuDetailsResponseListener);
         // and only otherwise display an error
         displayAnErrorIfNeeded();
     }

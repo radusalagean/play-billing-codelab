@@ -20,12 +20,13 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
-import com.codelab.GamePlayActivity;
+import com.codelab.billing.Skus;
 import com.codelab.sample.R;
 import com.codelab.billing.BillingProvider;
 import com.codelab.skulist.row.RowViewHolder;
 import com.codelab.skulist.row.SkuRowData;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -42,9 +43,23 @@ public class SkusAdapter extends RecyclerView.Adapter<RowViewHolder>
 
     public SkusAdapter(BillingProvider billingProvider) {
         mBillingProvider = billingProvider;
+        setHasStableIds(true);
     }
 
-    void updateData(List<SkuRowData> data) {
+    public void clearData() {
+        mListData = null;
+        notifyDataSetChanged();
+    }
+
+    public void updateData(List<SkuRowData> data) {
+        if (mListData == null) {
+            mListData = new ArrayList<>();
+        }
+        mListData.addAll(data);
+        notifyDataSetChanged();
+    }
+
+    public void setData(List<SkuRowData> data) {
         mListData = data;
         notifyDataSetChanged();
     }
@@ -66,14 +81,14 @@ public class SkusAdapter extends RecyclerView.Adapter<RowViewHolder>
             holder.button.setEnabled(true);
         }
         switch (data.getSku()) {
-            case "gas":
+            case Skus.SKU_INAPP_GAS:
                 holder.skuIcon.setImageResource(R.drawable.gas_icon);
                 break;
-            case "premium":
+            case Skus.SKU_INAPP_PREMIUM:
                 holder.skuIcon.setImageResource(R.drawable.premium_icon);
                 break;
-            case "gold_monthly":
-            case "gold_yearly":
+            case Skus.SKU_SUB_GOLD_MONTHLY:
+            case Skus.SKU_SUB_GOLD_YEARLY:
                 holder.skuIcon.setImageResource(R.drawable.gold_icon);
                 break;
         }
@@ -87,13 +102,19 @@ public class SkusAdapter extends RecyclerView.Adapter<RowViewHolder>
     @Override
     public void onButtonClicked(int position) {
         SkuRowData data = getData(position);
-        mBillingProvider.getBillingManager().startPurchaseFlow(data.getSku(),
-                data.getBillingType());
-
+        mBillingProvider.getBillingManager().startPurchaseFlow(data.getSku());
     }
 
     private SkuRowData getData(int position) {
         return mListData == null ? null : mListData.get(position);
+    }
+
+    @Override
+    public long getItemId(int position) {
+        if (mListData == null || mListData.size() <= position) {
+            return super.getItemId(position);
+        }
+        return mListData.get(position).hashCode();
     }
 }
 
