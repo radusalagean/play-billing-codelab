@@ -34,8 +34,6 @@ import java.util.ArrayDeque;
 import java.util.List;
 import java.util.Map;
 import java.util.Queue;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 /**
  * Role: Provides implementation for BillingManager, which will handle all the interactions with
@@ -84,8 +82,10 @@ public class BillingManager implements PurchasesUpdatedListener {
                     isClientConnecting = false;
                     if (responseCode == BillingClient.BillingResponse.OK) {
                         Log.i(TAG, "onBillingSetupFinished() response: " + responseCode);
-                        runnableQueue.offer(runnable);
-                        executeQueuedRunables();
+                        runnable.run();
+                        // if Runnables were added to the queue while the client was in the
+                        // "connecting" process, run them as well, in the order they were submitted
+                        executeQueuedRunnables();
                     } else {
                         Log.w(TAG, "onBillingSetupFinished() error code: " + responseCode);
                         runnableQueue.clear();
@@ -102,7 +102,8 @@ public class BillingManager implements PurchasesUpdatedListener {
         }
     }
 
-    private void executeQueuedRunables() {
+    private void executeQueuedRunnables() {
+        Log.i(TAG, "executeQueuedRunnables() -> " + runnableQueue.size() + " Runnables");
         while (runnableQueue.peek() != null) {
             runnableQueue.poll().run();
         }
